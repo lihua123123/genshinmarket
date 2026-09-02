@@ -26,9 +26,12 @@ function matchServer(userId, usersById, server) {
   return true
 }
 
-// 加载全部用户为 id -> user 的映射，用于判定每条道具的归属服务器
+// 加载全部用户为 id -> user 的映射，用于判定每条道具的归属服务器、展示昵称与在线状态
 async function loadUsersById(env) {
-  const users = await all(env, 'SELECT id, game_uid FROM users')
+  const users = await all(
+    env,
+    'SELECT id, game_name, group_name, game_uid, last_active_at FROM users'
+  )
   return new Map(users.map(u => [u.id, u]))
 }
 
@@ -81,7 +84,9 @@ market.get('/item/:name/players', async c => {
       group_name: user ? user.group_name : '',
       is_b: isBServer(user && user.game_uid),
       quantity: yuHuoAmount(it),
-      tags: parseTags(it.tags)
+      tags: parseTags(it.tags),
+      // 在线状态依据：该玩家最近活跃时间，前端据此判定在线/离线时长
+      last_active_at: user ? user.last_active_at : null
     })
   }
   return c.json(players)

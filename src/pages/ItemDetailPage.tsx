@@ -4,6 +4,7 @@ import { api } from '../utils/api'
 import { MarketPlayer } from '../types'
 import Card from '../components/Card'
 import MarketServerFilter from '../components/MarketServerFilter'
+import PresenceBadge from '../components/PresenceBadge'
 import { useMarketServer } from '../context/MarketServerContext'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'
@@ -17,6 +18,13 @@ export default function ItemDetailPage() {
   const [players, setPlayers] = useState<MarketPlayer[]>([])
   const [loading, setLoading] = useState(true)
   const toast = useToast()
+
+  // 每 30 秒刷新一次“当前时间”，让离线的分钟数随时间推进实时更新
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30 * 1000)
+    return () => clearInterval(id)
+  }, [])
 
   const decoded = itemName ? decodeURIComponent(itemName) : ''
 
@@ -76,6 +84,7 @@ export default function ItemDetailPage() {
                 {p.game_name}
                 {p.is_b && <span className="b-badge">B服</span>}
               </h3>
+              <PresenceBadge lastActiveAt={p.last_active_at ?? null} now={now} />
               <p className="muted">{p.group_name}</p>
               <div className="item-qty">
                 余货：<strong>{p.quantity}</strong>

@@ -8,6 +8,8 @@ import { first, run } from './db.js'
 const enc = new TextEncoder()
 const PBKDF2_ITERATIONS = 100000
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 天
+// 在线状态：活跃时间戳写入节流间隔（避免每次请求都写库）
+const ACTIVE_THROTTLE_MS = 45 * 1000
 
 function hex(bytes) {
   return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
@@ -80,7 +82,22 @@ export async function createSession(env, userId) {
   return token
 }
 
+// 刷新用户最近活跃时间（在线状态），带节流：仅当上次活跃早于阈值时才写库
+// 这样受保护的接口每次请求都调用也不会造成频繁写库
+export async function touchActive(env, userId) {
+  const now = new Date().toISOString()
+  const cutoff = new Date(Date.now() - ACTIVE_THROTTLE_MS).toISOString()
+  await run(
+    env,
+    'UPDATE users SET last_active_at = ? WHERE id = ? AND (last_active_at IS NULL OR last_active_at < ?)',
+    now,
+    userId,
+    cutoff
+  )
+}
+
 // 从请求 Authorization: Bearer <token> 解析当前登录用户；无效/过期返回 null
+// 校验通过后顺便刷新该用户的在线活跃时间（任何登录态请求都会更新在线状态）
 export async function currentUser(env, c) {
   const header = c.req.header('authorization') || ''
   if (!header.startsWith('Bearer ')) return null
@@ -93,11 +110,13 @@ export async function currentUser(env, c) {
     new Date().toISOString()
   )
   if (!s) return null
-  return await first(
+  const user = await first(
     env,
-    'SELECT id, group_name, game_name, game_uid, created_at FROM users WHERE id = ?',
+    'SELECT id, group_name, game_name, game_uid, created_at, last_active_at FROM users WHERE id = ?',
     s.user_id
   )
+  if (user) await touchActive(env, user.id)
+  return user
 }
 
 // 删除当前请求对应的会话（登出）

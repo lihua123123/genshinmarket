@@ -69,4 +69,6 @@ export interface MarketPlayer {
   is_b?: boolean
   quantity: number
   tags: Tag[]
+  // 该玩家的最近活跃时间（ISO 字符串），用于判断在线状态/离线时长
+  last_active_at?: string | null
 }

@@ -570,6 +570,28 @@ body {
   border-radius: 6px;
   flex-shrink: 0;
 }
+
+/* ===== 在线状态徽标 ===== */
+.presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  margin: 2px 0 8px;
+}
+.presence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.presence-online { color: var(--success); font-weight: 600; }
+.presence-online .presence-dot {
+  background: var(--success);
+  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.18);
+}
+.presence-offline { color: var(--text-muted); }
+.presence-offline .presence-dot { background: #c3ccd6; }
 /* ===== 响应式适配（移动端） ===== */
 @media (max-width: 768px) {
   .navbar { flex-wrap: wrap; height: auto; padding: 12px; gap: 12px; }

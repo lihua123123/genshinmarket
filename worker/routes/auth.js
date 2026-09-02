@@ -78,6 +78,13 @@ auth.get('/me', async c => {
   return c.json(user)
 })
 
+// 在线心跳：登录用户定期上报，刷新其最近活跃时间（currentUser 内部会 touchActive）
+auth.post('/heartbeat', async c => {
+  const user = await currentUser(c.env, c)
+  if (!user) return c.json({ error: '未登录或登录已过期' }, 401)
+  return c.json({ ok: true })
+})
+
 // 登出（删除当前会话令牌）
 auth.post('/logout', async c => {
   await deleteSession(c.env, c)

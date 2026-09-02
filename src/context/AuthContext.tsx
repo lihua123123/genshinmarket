@@ -42,6 +42,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
   }, [])
 
+  // 在线心跳：登录期间定期上报刷新“最近活跃时间”，使自己在市场玩家列表中显示为在线；
+  // 关闭/离开页面后停止上报，服务端时间戳过期即自然变为离线
+  useEffect(() => {
+    if (!currentUser) return
+    const beat = () => {
+      api.heartbeat().catch(() => {
+        /* 心跳失败忽略（网络抖动等），不影响本地状态 */
+      })
+    }
+    beat() // 登录/恢复后立即上报一次
+    const id = setInterval(beat, 60 * 1000) // 每分钟一次
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') beat()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
+  }, [currentUser])
+
   return (
     <AuthContext.Provider value={{ currentUser, login, logout }}>
       {children}

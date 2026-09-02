@@ -50,6 +50,9 @@ export const api = {
   me: (): Promise<User> => request<User>('/auth/me'),
   logout: (): Promise<{ ok: boolean }> =>
     request<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
+  // 在线心跳：登录期间定期上报，保持自己在市场中的“在线”状态
+  heartbeat: (): Promise<{ ok: boolean }> =>
+    request<{ ok: boolean }>('/auth/heartbeat', { method: 'POST' }),
   // 获取某用户资料（需登录；用于交易对方展示）
   userProfile: (id: number): Promise<User> => request<User>(`/auth/user/${id}`),
 
