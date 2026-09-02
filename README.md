@@ -43,7 +43,28 @@ npm run dev
 
 数据库文件会在首次启动时自动创建于 `server/database.db`（已被 `.gitignore` 忽略）。
 
-## 📁 项目结构
+## � 生产部署（单服务）
+
+本项目是 **Express + SQLite** 全栈应用，需要**支持 Node.js 与持久化磁盘**的托管平台（如 **Railway / Render / Fly.io / 自建 VPS**）。生产模式下 Express 会同时托管前端静态文件与 `/api` 接口，只需部署**一个服务**即可。
+
+> ⚠️ 注意：本项目**不适用** Cloudflare Workers / Pages 等无服务器边缘平台（无法运行 Express + `node:sqlite`，也没有持久化文件系统）。
+
+```bash
+# 构建前端产物（生成 dist/）
+npm run build
+
+# 以单服务模式启动（默认端口 3001，部署平台可用环境变量 PORT 覆盖）
+npm start
+```
+
+部署步骤（以 Railway / Render 为例）：
+1. 连接 GitHub 仓库 `lihua123123/genshinmarket`
+2. 构建命令：`npm run build`
+3. 启动命令：`npm start`
+4. 需开启**持久磁盘/卷**（Persistent Disk），用于存放 SQLite 数据库文件
+5. 平台会自动注入 `PORT` 环境变量
+
+## �📁 项目结构
 
 ```
 ├── package.json
