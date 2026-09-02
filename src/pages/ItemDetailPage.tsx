@@ -1,0 +1,82 @@
+import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { api } from '../utils/api'
+import { MarketPlayer } from '../types'
+import Card from '../components/Card'
+import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/AuthContext'
+
+// 物品详情页面（市场第三层）：展示拥有该物品"余货"的玩家列表
+export default function ItemDetailPage() {
+  const { itemName } = useParams()
+  const navigate = useNavigate()
+  const { currentUser } = useAuth()
+  const [players, setPlayers] = useState<MarketPlayer[]>([])
+  const [loading, setLoading] = useState(true)
+  const toast = useToast()
+
+  const decoded = itemName ? decodeURIComponent(itemName) : ''
+
+  useEffect(() => {
+    if (!decoded) return
+    api
+      .marketPlayers(decoded)
+      .then(setPlayers)
+      .catch(e => toast.error(e.message))
+      .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decoded])
+
+  // 无法与自己交易：把当前用户自己挂出的余货单独展示（不提供交易按钮）
+  const mine = players.filter(p => currentUser && p.user_id === currentUser.id)
+  const others = players.filter(p => !currentUser || p.user_id !== currentUser.id)
+
+  return (
+    <div className="page">
+      <div className="breadcrumb">
+        <span className="crumb" onClick={() => navigate('/market')}>
+          市场
+        </span>
+        <span className="crumb-sep">/</span>
+        <span className="crumb active">{decoded}</span>
+      </div>
+
+      <h2>{decoded}</h2>
+      <p className="muted">拥有该物品"余货"的玩家列表（不能与自己交易）</p>
+
+      {mine.length > 0 && (
+        <div className="mine-note">
+          🫵 你自己挂出了 {mine.length} 条余货，不能与自己交易
+        </div>
+      )}
+
+      {loading ? (
+        <div className="loading">加载中...</div>
+      ) : others.length === 0 ? (
+        <div className="empty">没有可交易的其他玩家（暂无人拥有该物品的余货）</div>
+      ) : (
+        <div className="card-grid">
+          {others.map(p => (
+            <Card key={p.item_id}>
+              <h3>{p.game_name}</h3>
+              <p className="muted">{p.group_name}</p>
+              <div className="item-qty">
+                余货：<strong>{p.quantity}</strong>
+              </div>
+              <button
+                className="btn btn-primary btn-block"
+                onClick={() =>
+                  navigate(
+                    `/trade?itemName=${encodeURIComponent(decoded)}&targetId=${p.user_id}&itemId=${p.item_id}`
+                  )
+                }
+              >
+                发起交易
+              </button>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
