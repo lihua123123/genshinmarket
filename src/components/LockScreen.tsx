@@ -1,21 +1,27 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { api } from '../utils/api'
 
-const PASSWORD = '艾莲其实是爱恋的意思'
-
-// 锁屏解锁页面：密码正确后进入，解锁状态保存在 sessionStorage
+// 锁屏解锁页面：密码由服务端（Cloudflare Secret）校验，前端不保存密码。
+// 校验通过后把解锁状态保存在 sessionStorage。
 export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState(false)
   const [shake, setShake] = useState(false)
+  const [checking, setChecking] = useState(false)
 
-  const handleUnlock = () => {
-    if (password === PASSWORD) {
+  const handleUnlock = async () => {
+    if (!password.trim() || checking) return
+    setChecking(true)
+    try {
+      await api.unlock(password)
       sessionStorage.setItem('unlocked', 'true')
       onUnlock()
-    } else {
+    } catch {
       setError(true)
       setShake(true)
       setTimeout(() => setShake(false), 600)
+    } finally {
+      setChecking(false)
     }
   }
 
@@ -34,10 +40,15 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
           }}
           onKeyDown={e => e.key === 'Enter' && handleUnlock()}
           placeholder="请输入密码"
+          disabled={checking}
           className={`input ${error ? 'input-error' : ''}`}
         />
-        <button className="btn btn-primary btn-block" onClick={handleUnlock}>
-          解锁
+        <button
+          className="btn btn-primary btn-block"
+          onClick={handleUnlock}
+          disabled={checking}
+        >
+          {checking ? '校验中...' : '解锁'}
         </button>
         {error && <p className="error-text">密码错误，请重试</p>}
       </div>

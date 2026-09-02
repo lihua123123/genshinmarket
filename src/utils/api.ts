@@ -16,6 +16,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  // 锁屏解锁（密码在服务端 Cloudflare Secret 校验，不进前端/仓库）
+  unlock: (password: string): Promise<{ ok: boolean }> =>
+    request<{ ok: boolean }>('/unlock', { method: 'POST', body: JSON.stringify({ password }) }),
+
   // 认证
   register: (data: { group_name: string; game_name: string; game_uid: string }): Promise<User> =>
     request<User>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),

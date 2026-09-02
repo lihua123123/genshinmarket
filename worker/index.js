@@ -21,6 +21,20 @@ app.route('/api/trade', trade)
 // 健康检查
 app.get('/api/health', c => c.json({ ok: true }))
 
+// 锁屏解锁校验：密码保存在 Cloudflare Secret（环境变量 LOCK_PASSWORD），不进入代码仓库/前端
+// 这样公开仓库也爬取不到真实密码
+app.post('/api/unlock', async c => {
+  const secret = c.env.LOCK_PASSWORD
+  if (!secret) {
+    return c.json({ error: '解锁密码未配置，请联系开发者' }, 500)
+  }
+  const { password } = await c.req.json()
+  if (typeof password === 'string' && password === secret) {
+    return c.json({ ok: true })
+  }
+  return c.json({ error: '密码错误，请重试' }, 401)
+})
+
 // 全局错误处理
 app.onError((err, c) => {
   console.error('[Worker Error]', err)

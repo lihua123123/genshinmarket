@@ -1,0 +1,5 @@
+# 本地开发密钥模板
+# 使用方法：复制本文件为 `.dev.vars`，并把 LOCK_PASSWORD 改成你的真实解锁密码。
+# `.dev.vars` 已被 .gitignore 忽略，不会提交到仓库。
+# 注意：本模板里的 LOCK_PASSWORD 只是示例占位，请勿填写真实密码后提交。
+LOCK_PASSWORD=replace_with_your_real_unlock_password

@@ -74,7 +74,28 @@ npm run deploy       # = vite build && wrangler deploy
 
 > ⚠️ 本项目早期采用 Express + `node:sqlite`，无法运行于 Cloudflare 无服务器环境，现已迁移到 **Hono + Cloudflare D1**。
 
-## 📁 项目结构
+## � 解锁密码（服务端密钥，不入仓库）
+
+锁屏密码**保存在 Cloudflare Secret 中**，不进入代码仓库或前端包，避免被爬取。
+
+### 生产环境（设置一次）
+
+```bash
+npx wrangler secret put LOCK_PASSWORD
+# 按提示粘贴你的真实解锁密码
+```
+
+### 本地开发
+
+复制模板并填入真实密码（`.dev.vars` 已被 `.gitignore` 忽略，不会提交）：
+
+```bash
+cp .dev.vars.example .dev.vars   # 然后编辑 .dev.vars 填入 LOCK_PASSWORD
+```
+
+`/api/unlock` 接口会用该密钥校验用户输入的密码。
+
+## �📁 项目结构
 
 ```
 ├── package.json
