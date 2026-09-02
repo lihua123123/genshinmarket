@@ -1,0 +1,27 @@
+name = "genshinmarket"
+main = "worker/index.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# 前端静态资源（构建产物 dist/）
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+# 单页应用（SPA）回退：前端路由（如 /trades）都返回 index.html
+not_found_handling = "single-page-application"
+
+# ===== D1 数据库 =====
+# 创建步骤：
+#   1) npx wrangler d1 create genshinmarket-db
+#   2) 把返回的 database_id 填到下方占位符
+#   3) npm run db:migrate   （应用 migrations/ 下的迁移）
+[[d1_databases]]
+binding = "DB"              # 代码中通过 env.DB 访问
+database_name = "genshinmarket-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# ===== 兼容性 =====
+# worker 需要处理 /api/*；其余路径由 assets 托管并做 SPA 回退
+[observability]
+enabled = true

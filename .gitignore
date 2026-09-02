@@ -1,8 +1,6 @@
 node_modules
 dist
-server/database.db
-server/database.db-wal
-server/database.db-shm
+.wrangler
 *.log
 .env
 .env.*

@@ -1,8 +1,9 @@
 # 艾莲的原神道具交易市场
 
-一个用于**原神**（Genshin Impact）玩家间进行道具交换的 Web 应用。采用明亮简洁的卡片式设计，支持道具库存管理、市场挂单、玩家间交易等完整流程。
+一个用于**原神**（Genshin Impact）玩家间进行道具交换的 Web 应用。采用明亮简洁的卡片式设计，支持道具库存管理、市场挂单、玩家间交易等完整流程。基于 **Cloudflare Workers + D1** 部署。
 
 > 本项目的界面与数据基于用户 "艾莲"（爱恋）的定制需求开发，锁屏密码为：请联系开发者获取
+
 ## ✨ 功能特性
 
 - **🔒 锁屏解锁**：输入正确密码进入（提示：网页的创建者是谁？）
@@ -20,84 +21,97 @@
 | 层 | 技术 |
 |----|------|
 | 前端 | Vite + React + TypeScript + React Router |
-| 后端 | Express |
-| 数据库 | SQLite（Node 内置 `node:sqlite` 模块） |
+| 后端 | Hono（运行于 Cloudflare Workers） |
+| 数据库 | Cloudflare D1（云端 SQLite） |
+| 部署 | Wrangler + Workers Static Assets |
 | 样式 | 原生 CSS（明亮卡片式设计） |
 
-## ✅ 环境要求
-
-- **Node.js ≥ 22.5**（因为使用了 Node 内置的 `node:sqlite` 模块，无需额外安装原生数据库依赖）
-
-## 🚀 快速开始
+## 🚀 快速开始（本地开发）
 
 ```bash
 # 1. 安装依赖
 npm install
 
-# 2. 启动开发服务器（同时启动前端 5173 和后端 3001）
+# 2. 应用本地 D1 迁移（首次需要）
+npm run db:migrate:local
+
+# 3. 终端 A：启动 Worker（含本地 D1，端口 8787）
+npm run dev:worker
+
+# 4. 终端 B：启动前端（端口 5173，/api 已代理到 8787）
 npm run dev
 ```
 
 - 前端：http://localhost:5173
-- 后端：http://localhost:3001 （`/api` 由 Vite 代理转发）
+- Worker/API：http://localhost:8787
 
-数据库文件会在首次启动时自动创建于 `server/database.db`（已被 `.gitignore` 忽略）。
+## ☁️ 部署到 Cloudflare（D1）
 
-## � 生产部署（单服务）
-
-本项目是 **Express + SQLite** 全栈应用，需要**支持 Node.js 与持久化磁盘**的托管平台（如 **Railway / Render / Fly.io / 自建 VPS**）。生产模式下 Express 会同时托管前端静态文件与 `/api` 接口，只需部署**一个服务**即可。
-
-> ⚠️ 注意：本项目**不适用** Cloudflare Workers / Pages 等无服务器边缘平台（无法运行 Express + `node:sqlite`，也没有持久化文件系统）。
+### 1. 创建 D1 数据库
 
 ```bash
-# 构建前端产物（生成 dist/）
-npm run build
-
-# 以单服务模式启动（默认端口 3001，部署平台可用环境变量 PORT 覆盖）
-npm start
+npx wrangler d1 create genshinmarket-db
 ```
 
-部署步骤（以 Railway / Render 为例）：
-1. 连接 GitHub 仓库 `lihua123123/genshinmarket`
-2. 构建命令：`npm run build`
-3. 启动命令：`npm start`
-4. 需开启**持久磁盘/卷**（Persistent Disk），用于存放 SQLite 数据库文件
-5. 平台会自动注入 `PORT` 环境变量
+把输出中的 **database_id** 填入 `wrangler.toml` 的 `[[d1_databases]]` 占位符（`REPLACE_WITH_YOUR_D1_DATABASE_ID`）。
 
-## �📁 项目结构
+### 2. 应用迁移（建表）
+
+```bash
+npm run db:migrate   # 应用到远程 D1
+```
+
+### 3. 构建并部署
+
+```bash
+npm run deploy       # = vite build && wrangler deploy
+```
+
+部署后：
+- 前端静态资源由 Workers Static Assets 托管
+- `/api/*` 由 Worker（Hono）处理，读写 D1
+- SPA 路由（如 `/trades`）自动回退到 `index.html`
+
+> ⚠️ 本项目早期采用 Express + `node:sqlite`，无法运行于 Cloudflare 无服务器环境，现已迁移到 **Hono + Cloudflare D1**。
+
+## 📁 项目结构
 
 ```
 ├── package.json
-├── vite.config.ts          # Vite 配置（/api 代理到 3001）
-├── index.html
-├── server/
-│   ├── index.js            # Express 服务器入口
-│   ├── database.js         # SQLite 初始化与建表/迁移
+├── wrangler.toml          # Worker/D1/静态资源配置
+├── vite.config.ts         # Vite 配置（/api 代理到 8787）
+├── migrations/
+│   └── 0001_init.sql      # D1 表结构迁移
+├── worker/                # Cloudflare Worker 后端（Hono + D1）
+│   ├── index.js           # Worker 入口，挂载 /api 路由
+│   ├── db.js              # D1 异步数据访问辅助
+│   ├── util.js            # 标签工具
 │   └── routes/
-│       ├── auth.js         # 用户认证
-│       ├── items.js        # 道具管理
-│       ├── market.js       # 市场
-│       └── trade.js        # 交易
-└── src/
+│       ├── auth.js        # 用户认证
+│       ├── items.js       # 道具管理
+│       ├── market.js      # 市场
+│       └── trade.js       # 交易
+├── index.html
+└── src/                   # React 前端
     ├── main.tsx / App.tsx
     ├── index.css
-    ├── types/index.ts      # 类型定义
-    ├── context/            # Auth / Toast Context
-    ├── data/               # 预设数据（月谕圣牌、材料分类）
-    ├── components/         # 通用组件
-    ├── pages/              # 页面
-    └── utils/              # API 封装、CSV 解析
+    ├── types/index.ts     # 类型定义
+    ├── context/           # Auth / Toast Context
+    ├── data/              # 预设数据（月谕圣牌、材料分类）
+    ├── components/        # 通用组件
+    ├── pages/             # 页面
+    └── utils/             # API 封装、CSV 解析
 ```
 
 ## 📖 使用说明
 
-1. **解锁**：输入密码 请联系开发者获取
+1. **解锁**：输入密码（请联系开发者获取）
 2. **注册/登录**：填写注册信息或选择已有账号
 3. **管理道具**：在"我的道具"中按类别浏览、添加、CSV 导入
 4. **发布余货**：给数量 > 1 的道具标记"余货"，即会在市场中挂出
 5. **发起交易**：在市场中找到目标物品和玩家，选择同类别物品完成交换
 
-## 📝 数据模型
+## 📝 数据模型（D1）
 
 - **users**：群内名字、游戏内名字、游戏 UID
 - **items**：所属用户、类别、名称、数量、标签、图标、颜色（图标/颜色为预留字段）
