@@ -2,9 +2,9 @@ import { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-// 整体布局：顶部导航栏 + 内容区；导航栏内置多用户切换
+// 整体布局：顶部导航栏 + 内容区；右上角显示当前登录用户（严格单账号，无多用户切换）
 export default function Layout({ children }: { children: ReactNode }) {
-  const { currentUser, users, setCurrentUser, logout } = useAuth()
+  const { currentUser, logout } = useAuth()
 
   return (
     <div className="layout">
@@ -30,20 +30,9 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="nav-user">
           {currentUser && (
             <>
-              <select
-                className="user-switch"
-                value={currentUser.id}
-                onChange={e => {
-                  const u = users.find(x => x.id === Number(e.target.value))
-                  if (u) setCurrentUser(u)
-                }}
-              >
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>
-                    {u.game_name}（{u.group_name}）
-                  </option>
-                ))}
-              </select>
+              <span className="user-switch-text">
+                {currentUser.game_name}（{currentUser.group_name}）
+              </span>
               <button className="logout-btn" onClick={logout}>
                 退出
               </button>

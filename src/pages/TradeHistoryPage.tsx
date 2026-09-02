@@ -27,7 +27,7 @@ export default function TradeHistoryPage() {
     if (!currentUser) return
     setLoading(true)
     try {
-      setTrades(await api.userTrades(currentUser.id))
+      setTrades(await api.userTrades())
     } catch (e: any) {
       toast.error(e.message)
     } finally {

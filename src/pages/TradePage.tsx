@@ -44,7 +44,7 @@ export default function TradePage() {
     ;(async () => {
       try {
         const [u, my, tgt] = await Promise.all([
-          api.current(targetId),
+          api.userProfile(targetId),
           api.getItems(currentUser.id),
           api.getItems(targetId)
         ])
@@ -77,7 +77,6 @@ export default function TradePage() {
     }
     try {
       const t = await api.initiateTrade({
-        initiator_id: currentUser!.id,
         target_id: targetId,
         initiator_item_id: mySelected.id,
         target_item_id: targetSelected.id

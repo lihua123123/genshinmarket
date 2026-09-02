@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
+import { MarketServerProvider } from './context/MarketServerContext'
 import LockScreen from './components/LockScreen'
 import RegisterScreen from './components/RegisterScreen'
 import Layout from './components/Layout'
@@ -38,9 +39,11 @@ export default function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <Gate />
-        </BrowserRouter>
+        <MarketServerProvider>
+          <BrowserRouter>
+            <Gate />
+          </BrowserRouter>
+        </MarketServerProvider>
       </AuthProvider>
     </ToastProvider>
   )

@@ -9,6 +9,9 @@ export interface User {
   created_at: string
 }
 
+// 市场服务器筛选：all 全部 | b 仅B服 | nonb 不看B服
+export type ServerFilter = 'all' | 'b' | 'nonb'
+
 // 道具标签（"寻找"为自动标签，"余货"为手动标签）
 export type Tag = '寻找' | '余货' | string
 
@@ -63,6 +66,7 @@ export interface MarketPlayer {
   user_id: number
   game_name: string
   group_name: string
+  is_b?: boolean
   quantity: number
   tags: Tag[]
 }

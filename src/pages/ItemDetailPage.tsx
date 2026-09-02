@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../utils/api'
 import { MarketPlayer } from '../types'
 import Card from '../components/Card'
+import MarketServerFilter from '../components/MarketServerFilter'
+import { useMarketServer } from '../context/MarketServerContext'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -11,6 +13,7 @@ export default function ItemDetailPage() {
   const { itemName } = useParams()
   const navigate = useNavigate()
   const { currentUser } = useAuth()
+  const { filter } = useMarketServer()
   const [players, setPlayers] = useState<MarketPlayer[]>([])
   const [loading, setLoading] = useState(true)
   const toast = useToast()
@@ -19,13 +22,14 @@ export default function ItemDetailPage() {
 
   useEffect(() => {
     if (!decoded) return
+    setLoading(true)
     api
-      .marketPlayers(decoded)
+      .marketPlayers(decoded, filter)
       .then(setPlayers)
       .catch(e => toast.error(e.message))
       .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [decoded])
+  }, [decoded, filter])
 
   // 无法与自己交易：把当前用户自己挂出的余货单独展示（不提供交易按钮）
   const mine = players.filter(p => currentUser && p.user_id === currentUser.id)
@@ -41,8 +45,18 @@ export default function ItemDetailPage() {
         <span className="crumb active">{decoded}</span>
       </div>
 
-      <h2>{decoded}</h2>
-      <p className="muted">拥有该物品"余货"的玩家列表（不能与自己交易）</p>
+      <div className="page-header-row">
+        <h2>{decoded}</h2>
+        <MarketServerFilter />
+      </div>
+      <p className="muted">
+        拥有该物品"余货"的玩家列表（不能与自己交易）
+        {filter !== 'all' && (
+          <span className="filter-hint">
+            {filter === 'b' ? ' · 已只显示 B 服市场' : ' · 已隐藏 B 服市场'}
+          </span>
+        )}
+      </p>
 
       {mine.length > 0 && (
         <div className="mine-note">
@@ -58,7 +72,10 @@ export default function ItemDetailPage() {
         <div className="card-grid">
           {others.map(p => (
             <Card key={p.item_id}>
-              <h3>{p.game_name}</h3>
+              <h3 className="player-title">
+                {p.game_name}
+                {p.is_b && <span className="b-badge">B服</span>}
+              </h3>
               <p className="muted">{p.group_name}</p>
               <div className="item-qty">
                 余货：<strong>{p.quantity}</strong>

@@ -18,3 +18,8 @@ export function normalizeTags(tags, quantity) {
   if (quantity <= 0) set.add('寻找')
   return Array.from(set)
 }
+
+// 是否 B 服玩家：游戏 UID 为 9 位且以 5 开头（Bilibili 服）
+export function isBServer(game_uid) {
+  return /^5\d{8}$/.test(String(game_uid || ''))
+}

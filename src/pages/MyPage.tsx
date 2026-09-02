@@ -147,7 +147,6 @@ export default function MyPage() {
     }
     try {
       await api.addItem({
-        user_id: currentUser!.id,
         category: form.category,
         item_name: form.item_name,
         quantity: Number(form.quantity) || 0
@@ -172,7 +171,7 @@ export default function MyPage() {
         toast.error('CSV 内容为空或格式不正确')
         return
       }
-      const res = await api.importCsv(currentUser!.id, rows)
+      const res = await api.importCsv(rows)
       toast.success(`成功导入 ${res.added} 个道具（已自动去重）`)
       loadItems()
     } catch (err: any) {
@@ -206,7 +205,6 @@ export default function MyPage() {
     try {
       if (editItem.id === 0) {
         await api.addItem({
-          user_id: currentUser!.id,
           category: editItem.category,
           item_name: editItem.item_name,
           quantity: editQty

@@ -1,63 +1,49 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { User } from '../types'
-import { api } from '../utils/api'
+import { api, setToken, getToken } from '../utils/api'
 
 interface AuthContextValue {
   currentUser: User | null
-  setCurrentUser: (u: User | null) => void
-  users: User[]
-  refreshUsers: () => Promise<void>
+  // 登录/注册成功后调用，写入令牌与用户
+  login: (token: string, user: User) => void
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUserState] = useState<User | null>(null)
-  const [users, setUsers] = useState<User[]>([])
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
 
-  const setCurrentUser = (u: User | null) => {
-    setCurrentUserState(u)
-    // 持久化当前用户到 localStorage，刷新后恢复
-    if (u) localStorage.setItem('current_user', JSON.stringify(u))
-    else localStorage.removeItem('current_user')
-  }
-
-  const refreshUsers = async () => {
-    try {
-      setUsers(await api.allUsers())
-    } catch {
-      // 忽略刷新失败，避免影响主流程
-    }
-  }
-
-  useEffect(() => {
-    const cached = localStorage.getItem('current_user')
-    if (cached) {
-      try {
-        const u = JSON.parse(cached)
-        // 用缓存 id 从服务端刷新用户信息，避免本地缓存过期（如数据库被重置）
-        api
-          .current(u.id)
-          .then(fresh => {
-            setCurrentUserState(fresh)
-            localStorage.setItem('current_user', JSON.stringify(fresh))
-          })
-          .catch(() => {
-            // 用户可能已被删除，保留缓存并在刷新列表后由用户重新选择
-            setCurrentUserState(u)
-          })
-      } catch {
-        /* ignore */
-      }
-    }
-    refreshUsers()
+  const login = useCallback((token: string, user: User) => {
+    setToken(token)
+    setCurrentUser(user)
   }, [])
 
-  const logout = () => setCurrentUser(null)
+  const logout = useCallback(async () => {
+    try {
+      await api.logout()
+    } catch {
+      /* 忽略网络/服务端错误，本地照常登出 */
+    }
+    setToken(null)
+    setCurrentUser(null)
+  }, [])
+
+  // 启动时若有本地令牌，用服务端 /me 恢复会话（严格单账号）
+  useEffect(() => {
+    if (!getToken()) return
+    api
+      .me()
+      .then(user => setCurrentUser(user))
+      .catch(() => {
+        // 令牌无效/过期：清除本地令牌，回到登录页
+        setToken(null)
+        setCurrentUser(null)
+      })
+  }, [])
 
   return (
-    <AuthContext.Provider value={{ currentUser, setCurrentUser, users, refreshUsers, logout }}>
+    <AuthContext.Provider value={{ currentUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

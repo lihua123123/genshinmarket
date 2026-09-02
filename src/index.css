@@ -540,6 +540,36 @@ body {
 .toast-success { background: var(--success); }
 .toast-error { background: var(--danger); }
 
+/* ===== 市场服务器筛选（全部 / 仅B服 / 不看B服） ===== */
+.page-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.page-header-row h2 { font-size: 24px; margin: 0; }
+.filter-hint { color: var(--primary); font-weight: 600; }
+.server-filter { display: flex; align-items: center; gap: 10px; }
+.server-filter-label { font-size: 13px; color: var(--text-muted); }
+.server-filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.server-filter-tab { padding: 6px 12px; font-size: 13px; }
+
+/* ===== B服玩家徽标 ===== */
+.player-title { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
+.b-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: #ff5c5c;
+  padding: 3px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
 /* ===== 响应式适配（移动端） ===== */
 @media (max-width: 768px) {
   .navbar { flex-wrap: wrap; height: auto; padding: 12px; gap: 12px; }
