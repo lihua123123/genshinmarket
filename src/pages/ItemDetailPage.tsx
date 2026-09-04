@@ -27,6 +27,8 @@ export default function ItemDetailPage() {
   }, [])
 
   const decoded = itemName ? decodeURIComponent(itemName) : ''
+  // 我的服务器（B服判定与后端一致），跨服玩家不能发起交易
+  const myIsB = /^5\d{8}$/.test(String(currentUser?.game_uid || ''))
 
   useEffect(() => {
     if (!decoded) return
@@ -89,16 +91,20 @@ export default function ItemDetailPage() {
               <div className="item-qty">
                 余货：<strong>{p.quantity}</strong>
               </div>
-              <button
-                className="btn btn-primary btn-block"
-                onClick={() =>
-                  navigate(
-                    `/trade?itemName=${encodeURIComponent(decoded)}&targetId=${p.user_id}&itemId=${p.item_id}`
-                  )
-                }
-              >
-                发起交易
-              </button>
+              {Boolean(p.is_b) !== myIsB ? (
+                <div className="cross-server-note">不同服务器，不可交易</div>
+              ) : (
+                <button
+                  className="btn btn-primary btn-block"
+                  onClick={() =>
+                    navigate(
+                      `/trade?itemName=${encodeURIComponent(decoded)}&targetId=${p.user_id}&itemId=${p.item_id}`
+                    )
+                  }
+                >
+                  发起交易
+                </button>
+              )}
             </Card>
           ))}
         </div>

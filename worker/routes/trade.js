@@ -1,7 +1,7 @@
 // worker/routes/trade.js
 import { Hono } from 'hono'
 import { all, first, run, lastRowId } from '../db.js'
-import { parseTags, normalizeTags } from '../util.js'
+import { parseTags, normalizeTags, isBServer } from '../util.js'
 import { currentUser } from '../auth-util.js'
 
 const trade = new Hono()
@@ -21,8 +21,13 @@ trade.post('/initiate', async c => {
   const targetId = Number(target_id)
   if (targetId === initiator_id) return c.json({ error: '不能与自己交易' }, 400)
 
-  const targetUser = await first(env, 'SELECT id FROM users WHERE id = ?', targetId)
+  const targetUser = await first(env, 'SELECT id, game_uid FROM users WHERE id = ?', targetId)
   if (!targetUser) return c.json({ error: '交易对象不存在' }, 404)
+
+  // 不同服务器（B服/官方）之间无法交易
+  if (isBServer(me.game_uid) !== isBServer(targetUser.game_uid)) {
+    return c.json({ error: 'B服与官方玩家无法互相交易' }, 400)
+  }
 
   const initItem = await first(env, 'SELECT * FROM items WHERE id = ?', initiator_item_id)
   const tgtItem = await first(env, 'SELECT * FROM items WHERE id = ?', target_item_id)

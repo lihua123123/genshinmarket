@@ -13,6 +13,11 @@ const STATUS_TEXT: Record<TradeStatus, string> = {
   cancelled: '已取消'
 }
 
+// B服判断：游戏 UID 为 9 位且以 5 开头（与后端 worker/util.js isBServer 一致）
+function isB(uid?: string | null): boolean {
+  return /^5\d{8}$/.test(String(uid || ''))
+}
+
 // 交易流程页面：
 // 1. 选择双方物品（各限 1 张牌）
 // 2. 确认交易后展示双方 UID，状态变为 pending
@@ -126,6 +131,23 @@ export default function TradePage() {
       <div className="page">
         <div className="empty">
           ⚠️ 不能与自己交易
+          <div style={{ marginTop: 16 }}>
+            <button className="btn btn-primary" onClick={() => navigate('/market')}>
+              返回市场
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 防御性校验：不同服务器（B服/官方）之间无法交易
+  const myB = isB(currentUser.game_uid)
+  if (myB !== isB(target.game_uid)) {
+    return (
+      <div className="page">
+        <div className="empty">
+          ⚠️ 不同服务器无法交易（{myB ? 'B服' : '官方'} 与 {isB(target.game_uid) ? 'B服' : '官方'} 无法互相交易）
           <div style={{ marginTop: 16 }}>
             <button className="btn btn-primary" onClick={() => navigate('/market')}>
               返回市场
