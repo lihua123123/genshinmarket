@@ -143,9 +143,7 @@ export default function TradePage() {
     ? targetItems.filter(i => i.category === activeCategory)
     : targetItems
 
-  // 我方只展示有富余（数量 > 1）的牌，避免把自己仅剩的牌交出去
-  const myTradeable = mySameCat.filter(i => i.quantity > 1)
-  // 对方"寻找"的牌集合（key = category::name），命中则绿光提示
+  // 对方"寻找"的牌集合（key = category::name），我方命中则绿光提示
   const wantedKeys = new Set(targetWanted.map(w => `${w.category}::${w.item_name}`))
 
   const renderItemList = (
@@ -235,11 +233,11 @@ export default function TradePage() {
               <h3>我提供的物品（选 1 张）</h3>
               <p className="muted">
                 {activeCategory ? `仅限同类别「${activeCategory}」` : '从你的道具中选择要给出的 1 张牌'}
-                {myTradeable.some(i => wantedKeys.has(`${i.category}::${i.item_name}`)) && (
+                {mySameCat.some(i => wantedKeys.has(`${i.category}::${i.item_name}`)) && (
                   <span className="wanted-legend"> · 🟢 绿光=对方正在寻找</span>
                 )}
               </p>
-              {renderItemList(myTradeable, mySelected, i => setMySelected(i), true)}
+              {renderItemList(mySameCat, mySelected, i => setMySelected(i), true)}
             </div>
             <div className="trade-panel">
               <h3>对方提供的物品（选 1 张）</h3>
