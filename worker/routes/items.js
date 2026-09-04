@@ -127,6 +127,20 @@ items.get('/:userId/wanted', async c => {
   )
 })
 
+// 某用户当前“拥有”（数量>=1）的道具（仅类别+名称，不含数量）
+// 交易页据此判断“对方还没这张牌 → 需要这张”，点亮绿色高亮。
+items.get('/:userId/owned', async c => {
+  const env = c.env
+  const me = await currentUser(env, c)
+  if (!me) return c.json({ error: '未登录或登录已过期' }, 401)
+  const userId = Number(c.req.param('userId'))
+  if (!userId) return c.json({ error: '缺少用户id' }, 400)
+  const rows = await all(env, 'SELECT category, item_name, quantity FROM items WHERE user_id = ?', userId)
+  return c.json(
+    rows.filter(r => Number(r.quantity) >= 1).map(r => ({ category: r.category, item_name: r.item_name }))
+  )
+})
+
 // 更新道具（数量 / 标签）
 // 安全：仅道具所属者本人可修改，否则 403
 items.put('/:id', async c => {

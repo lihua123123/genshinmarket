@@ -63,6 +63,8 @@ export const api = {
   getItems: (userId: number): Promise<Item[]> => request<Item[]>(`/items/${userId}`),
   // 某用户"寻找"中的道具（交易页用于判断"对方正好需要我这张牌"的绿色高亮）
   wantedItems: (userId: number): Promise<WantedItem[]> => request<WantedItem[]>(`/items/${userId}/wanted`),
+  // 某用户当前"拥有"(数量>=1)的道具名称（交易页判断对方是否还没这张牌→需要）
+  ownedItems: (userId: number): Promise<WantedItem[]> => request<WantedItem[]>(`/items/${userId}/owned`),
   updateItem: (id: number, data: { quantity?: number; tags?: string[] }): Promise<Item> =>
     request<Item>(`/items/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteItem: (id: number): Promise<{ success: boolean }> =>

@@ -35,8 +35,8 @@ export default function TradePage() {
   const [target, setTarget] = useState<User | null>(null)
   const [myItems, setMyItems] = useState<Item[]>([])
   const [targetItems, setTargetItems] = useState<Item[]>([])
-  // 对方"寻找"中的牌（用于绿色高亮：我方有对方正需要的牌）
-  const [targetWanted, setTargetWanted] = useState<WantedItem[]>([])
+  // 对方当前拥有的牌（数量>=1）；据此判断"对方还没这张牌 → 需要"（绿光）
+  const [targetOwned, setTargetOwned] = useState<WantedItem[]>([])
   const [mySelected, setMySelected] = useState<Item | null>(null)
   const [targetSelected, setTargetSelected] = useState<Item | null>(null)
   const [showUid, setShowUid] = useState(false)
@@ -50,16 +50,16 @@ export default function TradePage() {
     if (!currentUser) return
     ;(async () => {
       try {
-        const [u, my, tgt, wanted] = await Promise.all([
+        const [u, my, tgt, owned] = await Promise.all([
           api.userProfile(targetId),
           api.getItems(currentUser.id),
           api.getItems(targetId),
-          api.wantedItems(targetId)
+          api.ownedItems(targetId)
         ])
         setTarget(u)
         setMyItems(my)
         setTargetItems(tgt)
-        setTargetWanted(wanted)
+        setTargetOwned(owned)
         // 默认选中市场建议的物品（对方提供的物品）
         if (suggestedItemId) {
           const sug = tgt.find(i => i.id === suggestedItemId)
@@ -165,24 +165,25 @@ export default function TradePage() {
     ? targetItems.filter(i => i.category === activeCategory)
     : targetItems
 
-  // 双向"寻找"命中（key = category::name）：
-  //   - 我方提供的某牌 命中 对方正在寻找 → 绿光"对方需要"
-  //   - 对方提供的某牌 命中 我正在寻找   → 绿光"你需要"
-  const opponentWantedKeys = new Set(targetWanted.map(w => `${w.category}::${w.item_name}`))
-  const myWantedKeys = new Set(
-    myItems.filter(i => i.tags.includes('寻找')).map(i => `${i.category}::${i.item_name}`)
-  )
+  // 命中判定（绿光）：按“是否拥有(数量>=1)”判断，比“是否手动标了寻找”更符合真实换卡需求：
+  //   - 对方还没这张牌 → 对方需要（我方这张亮“对方需要”）
+  //   - 我还没这张牌   → 我需要（对方这张亮“你需要”）
+  const ownedKey = (x: { category: string; item_name: string }) => `${x.category}::${x.item_name}`
+  const targetOwnedKeys = new Set(targetOwned.map(ownedKey))
+  const myOwnedKeys = new Set(myItems.filter(i => i.quantity >= 1).map(ownedKey))
+  const oppNeeds = (item: Item) => item.quantity >= 1 && !targetOwnedKeys.has(ownedKey(item))
+  const iNeed = (item: Item) => item.quantity >= 1 && !myOwnedKeys.has(ownedKey(item))
 
   const renderItemList = (
     list: Item[],
     selected: Item | null,
     onSelect: (i: Item) => void,
-    wantedKeys: Set<string> | null,
+    isWanted: (i: Item) => boolean,
     hint: string
   ) => (
     <div className="trade-item-list">
       {list.map(item => {
-        const isWantedMatch = !!wantedKeys && wantedKeys.has(`${item.category}::${item.item_name}`)
+        const isWantedMatch = isWanted(item)
         return (
           <div
             key={item.id}
@@ -261,21 +262,21 @@ export default function TradePage() {
               <h3>我提供的物品（选 1 张）</h3>
               <p className="muted">
                 {activeCategory ? `仅限同类别「${activeCategory}」` : '从你的道具中选择要给出的 1 张牌'}
-                {mySameCat.some(i => opponentWantedKeys.has(`${i.category}::${i.item_name}`)) && (
-                  <span className="wanted-legend"> · 🟢 绿光=对方正在寻找</span>
+                {mySameCat.some(oppNeeds) && (
+                  <span className="wanted-legend"> · 🟢 绿光=对方还没有这张牌</span>
                 )}
               </p>
-              {renderItemList(mySameCat, mySelected, i => setMySelected(i), opponentWantedKeys, '对方需要')}
+              {renderItemList(mySameCat, mySelected, i => setMySelected(i), oppNeeds, '对方需要')}
             </div>
             <div className="trade-panel">
               <h3>对方提供的物品（选 1 张）</h3>
               <p className="muted">
                 {activeCategory ? `仅限同类别「${activeCategory}」` : '选择对方要给你的 1 张牌'}
-                {targetSameCat.some(i => myWantedKeys.has(`${i.category}::${i.item_name}`)) && (
-                  <span className="wanted-legend"> · 🟢 绿光=你正在寻找</span>
+                {targetSameCat.some(iNeed) && (
+                  <span className="wanted-legend"> · 🟢 绿光=你还没有这张牌</span>
                 )}
               </p>
-              {renderItemList(targetSameCat, targetSelected, i => setTargetSelected(i), myWantedKeys, '你需要')}
+              {renderItemList(targetSameCat, targetSelected, i => setTargetSelected(i), iNeed, '你需要')}
             </div>
           </div>
           <div className="trade-confirm-row">
