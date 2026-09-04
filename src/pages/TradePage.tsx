@@ -165,14 +165,11 @@ export default function TradePage() {
     ? targetItems.filter(i => i.category === activeCategory)
     : targetItems
 
-  // 命中判定（绿光）：按“是否拥有(数量>=1)”判断，比“是否手动标了寻找”更符合真实换卡需求：
-  //   - 对方还没这张牌 → 对方需要（我方这张亮“对方需要”）
-  //   - 我还没这张牌   → 我需要（对方这张亮“你需要”）
+  // 命中判定（绿光）：只提示“对方还没有的牌”——我方某张可提供的牌，对方当前没有(数量>=1缺失)则亮绿。
+  // 自己缺的牌自己清楚，因此不对“对方提供”的牌做反向绿光。
   const ownedKey = (x: { category: string; item_name: string }) => `${x.category}::${x.item_name}`
   const targetOwnedKeys = new Set(targetOwned.map(ownedKey))
-  const myOwnedKeys = new Set(myItems.filter(i => i.quantity >= 1).map(ownedKey))
   const oppNeeds = (item: Item) => item.quantity >= 1 && !targetOwnedKeys.has(ownedKey(item))
-  const iNeed = (item: Item) => item.quantity >= 1 && !myOwnedKeys.has(ownedKey(item))
 
   const renderItemList = (
     list: Item[],
@@ -272,11 +269,8 @@ export default function TradePage() {
               <h3>对方提供的物品（选 1 张）</h3>
               <p className="muted">
                 {activeCategory ? `仅限同类别「${activeCategory}」` : '选择对方要给你的 1 张牌'}
-                {targetSameCat.some(iNeed) && (
-                  <span className="wanted-legend"> · 🟢 绿光=你还没有这张牌</span>
-                )}
               </p>
-              {renderItemList(targetSameCat, targetSelected, i => setTargetSelected(i), iNeed, '你需要')}
+              {renderItemList(targetSameCat, targetSelected, i => setTargetSelected(i), () => false, '')}
             </div>
           </div>
           <div className="trade-confirm-row">
