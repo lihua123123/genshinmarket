@@ -1,4 +1,4 @@
-import { Item, MarketCategory, MarketItem, MarketPlayer, ServerFilter, Trade, User } from '../types'
+import { Item, MarketCategory, MarketItem, MarketPlayer, ServerFilter, Trade, User, AdminUser } from '../types'
 
 // API 请求封装：统一处理 JSON 序列化、错误抛出
 // 安全：所有请求自动附带登录令牌（Authorization: Bearer <token>），
@@ -88,5 +88,13 @@ export const api = {
   completeTrade: (id: number): Promise<Trade> => request<Trade>(`/trade/${id}/complete`, { method: 'POST' }),
   cancelTrade: (id: number): Promise<Trade> => request<Trade>(`/trade/${id}/cancel`, { method: 'POST' }),
   // 当前登录用户的交易记录
-  userTrades: (): Promise<Trade[]> => request<Trade[]>('/trade/mine')
+  userTrades: (): Promise<Trade[]> => request<Trade[]>('/trade/mine'),
+
+  // 后台管理（需管理员登录；普通用户调用返回 403）
+  adminUsers: (): Promise<AdminUser[]> => request<AdminUser[]>('/admin/users'),
+  adminResetPassword: (id: number, password: string): Promise<{ ok: boolean }> =>
+    request<{ ok: boolean }>(`/admin/user/${id}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ password })
+    })
 }

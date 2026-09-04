@@ -7,6 +7,8 @@ const auth = new Hono()
 
 // 只返回对外安全字段，绝不泄露 password_hash
 const USER_COLS = 'id, group_name, game_name, game_uid, created_at'
+// 自身字段（注册/登录返回）：额外带 is_admin，供前端判断是否展示后台入口
+const SELF_COLS = 'id, group_name, game_name, game_uid, created_at, is_admin'
 
 // 注册（需设置登录密码；成功后自动登录并返回令牌）
 auth.post('/register', async c => {
@@ -33,7 +35,7 @@ auth.post('/register', async c => {
       new Date().toISOString()
     )
     const id = lastRowId(r)
-    const user = await first(env, `SELECT ${USER_COLS} FROM users WHERE id = ?`, id)
+    const user = await first(env, `SELECT ${SELF_COLS} FROM users WHERE id = ?`, id)
     const token = await createSession(env, id)
     return c.json({ token, user }, 201)
   } catch (e) {
@@ -66,7 +68,8 @@ auth.post('/login', async c => {
     group_name: user.group_name,
     game_name: user.game_name,
     game_uid: user.game_uid,
-    created_at: user.created_at
+    created_at: user.created_at,
+    is_admin: Number(user.is_admin || 0)
   }
   return c.json({ token, user: safe })
 })

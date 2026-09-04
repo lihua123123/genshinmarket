@@ -17,6 +17,7 @@
   - **在线状态**：市场玩家列表展示每位玩家的在线状态——绿点「在线」或灰点「离线 X 分钟」；离线满 24 小时统一显示「24h+」。登录后前端每分钟自动心跳上报，离开页面/关闭后自然转为离线
 - **🔄 交易流程**：仅限同类别交易、每次限 1 张牌、确认后展示双方 UID、完成后自动扣补数量并重跑标签逻辑
 - **🗂 当前交易**：查询进行中/已完成/已取消的交易，可对进行中的交易完成或取消
+- **🛡 后台管理（管理员）**：管理员账号登录后可查看全部用户账号信息（游戏UID/昵称/群名/服务器/注册时间/最近活跃/在线会话等），并可重置用户密码。密码始终以 PBKDF2 哈希存储，**不支持也无法查看明文密码**
 - **🎨 预留扩展**：已为道具图标与颜色分级预留数据字段与界面空间
 
 ## 🛠 技术栈
@@ -76,6 +77,34 @@ npm run deploy       # = vite build && wrangler deploy
 - SPA 路由（如 `/trades`）自动回退到 `index.html`
 
 > ⚠️ 本项目早期采用 Express + `node:sqlite`，无法运行于 Cloudflare 无服务器环境，现已迁移到 **Hono + Cloudflare D1**。
+
+## 🛡 后台管理（管理员）
+
+后台只对 `users.is_admin = 1` 的账号开放（导航栏会出现「后台管理」）。
+
+### 启用第一个管理员
+
+应用迁移 `0004_add_admin.sql` 后，用 `wrangler` 把某个已注册账号标记为管理员（把 `<你的游戏UID>` 换成你自己的游戏UID）：
+
+```bash
+# 本地开发库
+npx wrangler d1 execute genshinmarket-db --local --command "UPDATE users SET is_admin = 1 WHERE game_uid = '<你的游戏UID>';"
+
+# 线上库
+npx wrangler d1 execute genshinmarket-db --remote --command "UPDATE users SET is_admin = 1 WHERE game_uid = '<你的游戏UID>';"
+```
+
+之后用该账号登录，导航栏即可看到「后台管理」。
+
+### 部署步骤
+
+```bash
+npm run db:migrate:local   # 本地：应用 0004 迁移
+npm run db:migrate         # 线上：应用 0004 迁移
+# 代码改动需 git commit && git push，GitHub Cloudflare 集成会自动部署
+```
+
+> ⚠️ **安全提示**：后台能查看/重置所有用户账号。请确保仅把 `is_admin` 授给你信任的账号；不要轻信任何能登录后台的账号。密码均为哈希存储，无法查看明文——这是有意设计，请勿改为明文存储。
 
 ## � 解锁密码（服务端密钥，不入仓库）
 

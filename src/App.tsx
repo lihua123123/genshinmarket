@@ -11,6 +11,7 @@ import MarketPage from './pages/MarketPage'
 import ItemDetailPage from './pages/ItemDetailPage'
 import TradePage from './pages/TradePage'
 import TradeHistoryPage from './pages/TradeHistoryPage'
+import AdminPanel from './pages/AdminPanel'
 
 // 应用门控：锁屏 → 注册/登录 → 主界面
 function Gate() {
@@ -29,6 +30,7 @@ function Gate() {
         <Route path="/market/item/:itemName" element={<ItemDetailPage />} />
         <Route path="/trade" element={<TradePage />} />
         <Route path="/trades" element={<TradeHistoryPage />} />
+        <Route path="/admin" element={<AdminPanel />} />
         <Route path="*" element={<Navigate to="/my" replace />} />
       </Routes>
     </Layout>

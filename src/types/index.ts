@@ -7,6 +7,21 @@ export interface User {
   game_name: string
   game_uid: string
   created_at: string
+  // 管理员标记（1=管理员），仅管理员账号为 1，普通用户为 0
+  is_admin?: number
+}
+
+// 后台管理：用户账号信息（供管理员查看；不含 password_hash）
+export interface AdminUser {
+  id: number
+  group_name: string
+  game_name: string
+  game_uid: string
+  created_at: string
+  last_active_at: string | null
+  is_admin: number
+  has_password: number
+  active_sessions: number
 }
 
 // 市场服务器筛选：all 全部 | b 仅B服 | nonb 不看B服

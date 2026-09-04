@@ -26,6 +26,14 @@ export default function Layout({ children }: { children: ReactNode }) {
           >
             当前交易
           </NavLink>
+          {currentUser?.is_admin ? (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            >
+              后台管理
+            </NavLink>
+          ) : null}
         </div>
         <div className="nav-user">
           {currentUser && (

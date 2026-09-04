@@ -3,6 +3,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import auth from './routes/auth.js'
+import admin from './routes/admin.js'
 import items from './routes/items.js'
 import market from './routes/market.js'
 import trade from './routes/trade.js'
@@ -14,6 +15,7 @@ app.use('*', cors())
 
 // 全部 API 挂在 /api 下，与前端请求路径一致
 app.route('/api/auth', auth)
+app.route('/api/admin', admin)
 app.route('/api/items', items)
 app.route('/api/market', market)
 app.route('/api/trade', trade)

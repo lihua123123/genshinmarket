@@ -112,11 +112,20 @@ export async function currentUser(env, c) {
   if (!s) return null
   const user = await first(
     env,
-    'SELECT id, group_name, game_name, game_uid, created_at, last_active_at FROM users WHERE id = ?',
+    'SELECT id, group_name, game_name, game_uid, created_at, last_active_at, is_admin FROM users WHERE id = ?',
     s.user_id
   )
   if (user) await touchActive(env, user.id)
   return user
+}
+
+// 返回当前登录用户，且必须是管理员（is_admin=1），否则返回 null
+// 用于后台接口的前置鉴权
+// eslint-disable-next-line no-unused-vars
+export async function currentAdmin(env, c) {
+  const user = await currentUser(env, c)
+  if (user && Number(user.is_admin) === 1) return user
+  return null
 }
 
 // 删除当前请求对应的会话（登出）
