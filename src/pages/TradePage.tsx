@@ -165,18 +165,24 @@ export default function TradePage() {
     ? targetItems.filter(i => i.category === activeCategory)
     : targetItems
 
-  // 对方"寻找"的牌集合（key = category::name），我方命中则绿光提示
-  const wantedKeys = new Set(targetWanted.map(w => `${w.category}::${w.item_name}`))
+  // 双向"寻找"命中（key = category::name）：
+  //   - 我方提供的某牌 命中 对方正在寻找 → 绿光"对方需要"
+  //   - 对方提供的某牌 命中 我正在寻找   → 绿光"你需要"
+  const opponentWantedKeys = new Set(targetWanted.map(w => `${w.category}::${w.item_name}`))
+  const myWantedKeys = new Set(
+    myItems.filter(i => i.tags.includes('寻找')).map(i => `${i.category}::${i.item_name}`)
+  )
 
   const renderItemList = (
     list: Item[],
     selected: Item | null,
     onSelect: (i: Item) => void,
-    matchWanted: boolean
+    wantedKeys: Set<string> | null,
+    hint: string
   ) => (
     <div className="trade-item-list">
       {list.map(item => {
-        const isWantedMatch = matchWanted && wantedKeys.has(`${item.category}::${item.item_name}`)
+        const isWantedMatch = !!wantedKeys && wantedKeys.has(`${item.category}::${item.item_name}`)
         return (
           <div
             key={item.id}
@@ -192,7 +198,7 @@ export default function TradePage() {
               </div>
             </div>
             <div className="trade-item-tags">
-              {isWantedMatch && <span className="wanted-hint">对方需要</span>}
+              {isWantedMatch && <span className="wanted-hint">{hint}</span>}
               {item.tags.map(t => (
                 <Tag key={t} label={t} />
               ))}
@@ -255,18 +261,21 @@ export default function TradePage() {
               <h3>我提供的物品（选 1 张）</h3>
               <p className="muted">
                 {activeCategory ? `仅限同类别「${activeCategory}」` : '从你的道具中选择要给出的 1 张牌'}
-                {mySameCat.some(i => wantedKeys.has(`${i.category}::${i.item_name}`)) && (
+                {mySameCat.some(i => opponentWantedKeys.has(`${i.category}::${i.item_name}`)) && (
                   <span className="wanted-legend"> · 🟢 绿光=对方正在寻找</span>
                 )}
               </p>
-              {renderItemList(mySameCat, mySelected, i => setMySelected(i), true)}
+              {renderItemList(mySameCat, mySelected, i => setMySelected(i), opponentWantedKeys, '对方需要')}
             </div>
             <div className="trade-panel">
               <h3>对方提供的物品（选 1 张）</h3>
               <p className="muted">
                 {activeCategory ? `仅限同类别「${activeCategory}」` : '选择对方要给你的 1 张牌'}
+                {targetSameCat.some(i => myWantedKeys.has(`${i.category}::${i.item_name}`)) && (
+                  <span className="wanted-legend"> · 🟢 绿光=你正在寻找</span>
+                )}
               </p>
-              {renderItemList(targetSameCat, targetSelected, i => setTargetSelected(i), false)}
+              {renderItemList(targetSameCat, targetSelected, i => setTargetSelected(i), myWantedKeys, '你需要')}
             </div>
           </div>
           <div className="trade-confirm-row">
