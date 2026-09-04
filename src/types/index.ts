@@ -24,6 +24,12 @@ export interface AdminUser {
   active_sessions: number
 }
 
+// 交易辅助：某用户"寻找"中的道具（只含类别与名称）
+export interface WantedItem {
+  category: string
+  item_name: string
+}
+
 // 市场服务器筛选：all 全部 | b 仅B服 | nonb 不看B服
 export type ServerFilter = 'all' | 'b' | 'nonb'
 

@@ -110,6 +110,23 @@ items.get('/:userId', async c => {
   return c.json(list.filter(i => i.quantity > 1 && hasYuHuo(i.tags)))
 })
 
+// 某用户"寻找"中的道具（仅返回 category + item_name）
+// 供交易页做"我方牌命中对方正在寻找的牌"的绿色高亮提示。
+// 安全：仅登录用户可查；只返回类别与名称，不暴露对方的数量等私有库存信息。
+items.get('/:userId/wanted', async c => {
+  const env = c.env
+  const me = await currentUser(env, c)
+  if (!me) return c.json({ error: '未登录或登录已过期' }, 401)
+  const userId = Number(c.req.param('userId'))
+  if (!userId) return c.json({ error: '缺少用户id' }, 400)
+  const rows = await all(env, 'SELECT category, item_name, tags FROM items WHERE user_id = ?', userId)
+  return c.json(
+    rows
+      .filter(r => parseTags(r.tags).includes('寻找'))
+      .map(r => ({ category: r.category, item_name: r.item_name }))
+  )
+})
+
 // 更新道具（数量 / 标签）
 // 安全：仅道具所属者本人可修改，否则 403
 items.put('/:id', async c => {

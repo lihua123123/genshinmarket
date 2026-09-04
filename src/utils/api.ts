@@ -1,4 +1,4 @@
-import { Item, MarketCategory, MarketItem, MarketPlayer, ServerFilter, Trade, User, AdminUser } from '../types'
+import { Item, MarketCategory, MarketItem, MarketPlayer, ServerFilter, Trade, User, AdminUser, WantedItem } from '../types'
 
 // API 请求封装：统一处理 JSON 序列化、错误抛出
 // 安全：所有请求自动附带登录令牌（Authorization: Bearer <token>），
@@ -61,6 +61,8 @@ export const api = {
     request<Item>('/items', { method: 'POST', body: JSON.stringify(data) }),
   // 取某用户道具：本人 id 返回完整私有库存；他人 id 只返回其"余货"可交易道具
   getItems: (userId: number): Promise<Item[]> => request<Item[]>(`/items/${userId}`),
+  // 某用户"寻找"中的道具（交易页用于判断"对方正好需要我这张牌"的绿色高亮）
+  wantedItems: (userId: number): Promise<WantedItem[]> => request<WantedItem[]>(`/items/${userId}/wanted`),
   updateItem: (id: number, data: { quantity?: number; tags?: string[] }): Promise<Item> =>
     request<Item>(`/items/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteItem: (id: number): Promise<{ success: boolean }> =>

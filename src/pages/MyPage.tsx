@@ -331,12 +331,28 @@ export default function MyPage() {
             <div className="card-grid">
               {categoryItems.map(item => {
                 const isVirtual = item.id === 0
+                const isMoon = item.category === '月谕圣牌'
                 return (
                   <Card
                     key={isVirtual ? `v-${item.item_name}` : item.id}
                     selected={selected.has(item.id)}
-                    className="item-card"
+                    className={`item-card ${isMoon ? 'moon-card' : ''}`}
                   >
+                    {/* 月谕圣牌：竖版塔罗卡视觉（比例 373×958，等比例缩放）；其它物品不显示 */}
+                    {isMoon && (
+                      <div className="moon-visual-wrap">
+                        <div
+                          className={`moon-visual ${item.color ? 'has-color' : ''}`}
+                          style={item.color ? { background: item.color } : undefined}
+                        >
+                          {item.icon ? (
+                            <img src={item.icon} alt={item.item_name} />
+                          ) : (
+                            <span className="moon-glyph">🃏</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <div className="item-card-top">
                       <span className="item-category">{item.category}</span>
                       {isVirtual ? (
@@ -353,13 +369,15 @@ export default function MyPage() {
                       )}
                     </div>
                     <div className="item-name-row">
-                      {/* 预留空间：道具图标与颜色分级（icon/color 字段后续补充） */}
-                      <div
-                        className={`item-icon ${item.color ? 'has-color' : ''}`}
-                        style={item.color ? { background: item.color } : undefined}
-                      >
-                        {item.icon ? <img src={item.icon} alt={item.item_name} /> : '🃏'}
-                      </div>
+                      {/* 非月谕圣牌才显示左侧小图标；月谕圣牌已用上方大图，避免重复 */}
+                      {!isMoon && (
+                        <div
+                          className={`item-icon ${item.color ? 'has-color' : ''}`}
+                          style={item.color ? { background: item.color } : undefined}
+                        >
+                          {item.icon ? <img src={item.icon} alt={item.item_name} /> : '🃏'}
+                        </div>
+                      )}
                       <h3 className="item-name">{item.item_name}</h3>
                     </div>
                     <div className="item-tags">

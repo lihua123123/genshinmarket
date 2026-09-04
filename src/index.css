@@ -476,6 +476,21 @@ body {
 .trade-item:hover { border-color: var(--primary); }
 .trade-item.selected { border-color: var(--primary); background: #eef4ff; }
 .trade-item.disabled { opacity: 0.5; cursor: not-allowed; }
+/* 交易：我方牌命中对方"寻找" → 绿色光晕提示 */
+.trade-item.wanted-match {
+  border-color: #4caf8f;
+  background: rgba(39, 174, 96, 0.12);
+  box-shadow: 0 0 0 1px rgba(39, 174, 96, 0.35), 0 0 12px rgba(39, 174, 96, 0.3);
+}
+.wanted-hint {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--success);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.wanted-legend { color: var(--success); font-weight: 600; }
 .trade-item-name { font-size: 15px; font-weight: 600; }
 .trade-item-sub { font-size: 12px; color: var(--text-muted); font-weight: 400; }
 .trade-item-tags { display: flex; gap: 4px; }
@@ -642,3 +657,50 @@ body {
   margin-bottom: 10px;
 }
 .reset-tip { margin-bottom: 16px; }
+
+/* ===== 月谕圣牌：竖版塔罗卡（仅“月谕圣牌”类别内道具） ===== */
+/* 视觉主体宽高比固定为参考图 373×958（等比例缩放），改 --moon-w 即可整体缩放 */
+.item-card.moon-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.item-card.moon-card .item-card-top,
+.item-card.moon-card .item-name-row {
+  width: 100%;
+  justify-content: center;
+}
+.moon-visual-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: -6px 0 14px;
+}
+.moon-visual {
+  position: relative;
+  --moon-w: min(150px, 62%);
+  width: var(--moon-w);
+  aspect-ratio: 373 / 958; /* 参考图尺寸，等比例缩放 */
+  border-radius: 50% 50% 50% 50% / 16% 16% 16% 16%; /* 顶部/底部拱形 */
+  background: linear-gradient(180deg, #e9edf2 0%, #ccd4de 48%, #e9edf2 100%);
+  border: 2px solid #d6dde6;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.moon-visual.has-color { border-color: transparent; }
+/* 内部对称浅装饰，呼应参考图的对称纹样 */
+.moon-visual::after {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border: 1px solid rgba(120, 135, 150, 0.3);
+  border-radius: 46% 46% 46% 46% / 15% 15% 15% 15%;
+  pointer-events: none;
+}
+.moon-visual img { width: 100%; height: 100%; object-fit: cover; }
+.moon-glyph { font-size: 42px; opacity: 0.7; }
