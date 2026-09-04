@@ -10,6 +10,14 @@ const USER_COLS = 'id, group_name, game_name, game_uid, created_at'
 // 自身字段（注册/登录返回）：额外带 is_admin，供前端判断是否展示后台入口
 const SELF_COLS = 'id, group_name, game_name, game_uid, created_at, is_admin'
 
+// 月谕圣牌（完整 22 张，与 src/data/cards.ts 顺序一致）
+const MOON_CARD_NAMES = [
+  '魔法师', '女祭司', '女皇', '皇帝', '圣职者',
+  '恋人', '战车', '力量', '隐者', '命运之轮', '正义',
+  '倒吊人', '死神', '节制', '魔鬼', '塔', '星',
+  '月亮', '太阳', '审判', '世界', '愚者'
+]
+
 // 注册（需设置登录密码；成功后自动登录并返回令牌）
 auth.post('/register', async c => {
   const env = c.env
@@ -35,6 +43,16 @@ auth.post('/register', async c => {
       new Date().toISOString()
     )
     const id = lastRowId(r)
+    // 注册默认：预置全部 22 张月谕圣牌（数量 0 + “寻找”标签），
+    // 使圣牌成套收藏完整，交易页“对方缺哪张→绿光”判定可靠。
+    // 仅圣牌做此默认；其它类目（材料等）逻辑不同，由用户按需添加。
+    const now = new Date().toISOString()
+    const stmts = MOON_CARD_NAMES.map(name =>
+      env.DB.prepare(
+        'INSERT INTO items (user_id, category, item_name, quantity, tags, icon, color, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)'
+      ).bind(id, '月谕圣牌', name, 0, JSON.stringify(['寻找']), null, null, now, now)
+    )
+    await env.DB.batch(stmts)
     const user = await first(env, `SELECT ${SELF_COLS} FROM users WHERE id = ?`, id)
     const token = await createSession(env, id)
     return c.json({ token, user }, 201)

@@ -169,7 +169,9 @@ export default function TradePage() {
   // 自己缺的牌自己清楚，因此不对“对方提供”的牌做反向绿光。
   const ownedKey = (x: { category: string; item_name: string }) => `${x.category}::${x.item_name}`
   const targetOwnedKeys = new Set(targetOwned.map(ownedKey))
-  const oppNeeds = (item: Item) => item.quantity >= 1 && !targetOwnedKeys.has(ownedKey(item))
+  // 仅月谕圣牌（成套可收集牌）做“对方缺哪张”提示；其它物品/材料逻辑不同，不标绿
+  const oppNeeds = (item: Item) =>
+    item.category === '月谕圣牌' && item.quantity >= 1 && !targetOwnedKeys.has(ownedKey(item))
 
   const renderItemList = (
     list: Item[],
